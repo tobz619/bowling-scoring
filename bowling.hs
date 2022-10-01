@@ -19,7 +19,7 @@ turnTwo :: Score -> Integer -> Maybe Frame
 turnTwo Strike _ = Just StrikeFrame
 turnTwo (NotTen i) j
  | i + j == 10 = Just $ RegFrame (NotTen i, Spare)
- | i + j < 10 && i + j > 0 = Just $ RegFrame (NotTen i, NotTen (i+j))
+ | i + j < 10 && i + j > 0 = Just $ RegFrame (NotTen i, NotTen j)
  | otherwise = Nothing
 turnTwo _ _ = Nothing
 
@@ -73,9 +73,11 @@ toScore frames last = TotalScore $ go (NotTen 0) allPins
 
 
                           go :: Score -> [Score] -> Integer
+                          go Strike (x:Spare:xs) = 10 + go Spare xs
                           go Strike (x:y:xs) = 10 + scoreToNum x + scoreToNum y + go x (y:xs)
+                          go x (Strike:xs) = scoreToNum x + go Strike xs
                           go x (Spare:y:xs) =  10 + scoreToNum y + go y xs
-                          go (NotTen i) (x:xs) = i + go x xs
+                          go (NotTen i) (NotTen j:xs) = i + go (NotTen j) xs
                           go x [] = scoreToNum x
                           go _ _ = 0
 
@@ -94,9 +96,13 @@ bowlingGame  = do a <- nineFrames
                   print c
                   return $ toScore listFrames c
 
-sparesGame :: TotalScore
-sparesGame = let a = catMaybes $ replicate 9 (mkFrame 8 2)
-              in toScore a (LastFrame (NotTen 8, NotTen 2, NotTen 8))
+sparesGame :: IO TotalScore
+sparesGame = do let a = catMaybes $ replicate 9 (mkFrame 8 2)
+                let b = LastFrame (NotTen 8, NotTen 2, NotTen 8)
+                mapM_ print a
+                print b
+                return $ toScore a b
+                    
 
 strikesGame :: IO TotalScore
 strikesGame = do  let a = replicate 9 (Just StrikeFrame)
@@ -106,8 +112,7 @@ strikesGame = do  let a = replicate 9 (Just StrikeFrame)
                   print c
                   return $ toScore listFrames c
 
-tests = do let a = sparesGame
-           print a
+tests = do sparesGame
            strikesGame
 
 main = do a <- bowlingGame
