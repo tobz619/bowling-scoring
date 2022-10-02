@@ -63,23 +63,22 @@ mkLastFrame _ = undefined
 
 toScore :: [Frame] -> LastFrame -> TotalScore
 toScore frames last = TotalScore $ go (NotTen 0) allPins
-                    where allPins = concatMap toScore frames ++ toScoreLast last
+                    where allPins = concatMap makeList frames ++ makeListLast last
 
-                            where toScore StrikeFrame = [Strike]
-                                  toScore (RegFrame (a,b)) = [a,b]
-                                  toScoreLast (LastFrame (a,b,c)) = (toList (a,b,c))
-                                                                where toList (a,b, Blank) = [a,b]
-                                                                      toList (a,b,c) = [a,b,c]
+                            where makeList StrikeFrame = [Strike]
+                                  makeList (RegFrame (a,b)) = [a,b]
+                                  makeListLast (LastFrame (a,b,c)) = [a,b,c]
 
 
                           go :: Score -> [Score] -> Integer
-                          go Strike (x:Spare:xs) = 10 + go Spare xs
-                          go Strike (x:y:xs) = 10 + scoreToNum x + scoreToNum y + go x (y:xs)
-                          go x (Strike:xs) = scoreToNum x + go Strike xs
-                          go x (Spare:y:xs) =  10 + scoreToNum y + go y xs
-                          go (NotTen i) (NotTen j:xs) = i + go (NotTen j) xs
+                          go Strike [a, Spare] = 20
+                          go Strike (x:Spare:xs) = 20 + go Spare xs
+                          go Strike [Strike, Strike] = 30
+                          go x (Spare:y:xs) = 10 + scoreToNum y + go y xs
+                          go Strike (x:y:xs) =  10 + scoreToNum x + scoreToNum y + go x (y:xs)
+                          go (NotTen i) (j:xs) = i + go j xs
+                          go x (y:ys) = scoreToNum x + go y ys
                           go x [] = scoreToNum x
-                          go _ _ = 0
 
 scoreToNum :: Score -> Integer
 scoreToNum Strike = 10
@@ -112,7 +111,8 @@ strikesGame = do  let a = replicate 9 (Just StrikeFrame)
                   print c
                   return $ toScore listFrames c
 
-tests = do sparesGame
+tests = do a <- sparesGame
+           print a
            strikesGame
 
 main = do a <- bowlingGame
