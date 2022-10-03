@@ -25,9 +25,9 @@ turnTwo _ _ = Nothing
 
 
 mkFrame :: Integer -> Integer -> Maybe Frame
-mkFrame score1 score2 = turnOne score1 >>= \x -> if x == Strike
-                                                 then Just StrikeFrame
-                                                 else turnTwo x score2
+mkFrame score1 score2 = turnOne score1 >>= check
+                                  where check Strike = Just StrikeFrame
+                                        check a      = turnTwo a score2
 
 inputScore :: IO Score
 inputScore = do inp <- readLn :: IO Integer
@@ -112,7 +112,9 @@ strikesGame = do  let a = replicate 9 (Just StrikeFrame)
                   return $ toScore listFrames c
 
 tests = do a <- sparesGame
+
            print a
+           
            strikesGame
 
 main = do a <- bowlingGame
